@@ -1,17 +1,19 @@
 import plotly.graph_objects as go
 import streamlit as st
 
-from labo_common import (COULEUR_ACHAT, COULEUR_ERREUR, COULEUR_MARGE, ENCRE, entete, fmt, init_page,
-                         segment, style)
+from labo_common import COULEUR_ACHAT, degrade, entete, euros, fmt, init_page, style
 
 init_page("Taux de marque et de marge")
 entete("Taux de marque et taux de marge : à quoi ça sert ?")
 
+# Repères de couleur : le taux de marque passe du rouge (20 %) au vert (70 %)
+BAS, HAUT = 20, 70
+
 with st.sidebar:
     st.header("📊 Paramètres")
-    prix_achat = st.slider("Prix d'achat HT du produit (€)", 1, 100, 24)
-    taux_marque_vise = st.slider("Taux de marque visé (%)", 5, 90, 60)
-    ca_produits = st.slider("Ventes de produits du mois (€)", 100, 3000, 800, step=50)
+    prix_achat = st.slider("Prix d'achat HT du produit (€)", 2, 80, 18)
+    taux_marque_vise = st.slider("Taux de marque visé (%)", 10, 80, 55)
+    ca_produits = st.slider("Ventes de produits du mois (€)", 500, 10000, 4000, step=250)
 
 m = taux_marque_vise / 100
 
@@ -27,84 +29,93 @@ marge_erreur = prix_vente_erreur - prix_achat
 marque_reelle = marge_erreur / prix_vente_erreur * 100
 manque = prix_vente - prix_vente_erreur
 
+couleur_visee = degrade(taux_marque_vise, BAS, HAUT)
+couleur_reelle = degrade(marque_reelle, BAS, HAUT)
+
+if taux_marque_vise < 40:
+    repere = "faible : il restera peu pour payer loyer et salaires"
+elif taux_marque_vise < 55:
+    repere = "correct"
+else:
+    repere = "confortable"
+
 st.markdown(
-    f"> **Emma rachète un produit {fmt(prix_achat)} € HT. Elle veut garder {taux_marque_vise} % du prix de vente "
-    f"pour payer ses charges. À quel prix doit-elle le vendre ?**"
-)
-st.write("Déplace les curseurs à gauche : le prix et les graphiques se recalculent.")
-
-# ---- 1. Fixer le prix
-st.markdown("## 1. Fixer le prix de vente")
-c1, c2, c3 = st.columns(3)
-c1.metric("Prix de vente", f"{fmt(prix_vente)} €", help="Prix d'achat ÷ (1 − taux de marque)")
-c2.metric("Taux de marge équivalent", f"{fmt(taux_marge)} %", help="Marge ÷ prix d'achat × 100")
-c3.metric("Coefficient multiplicateur", f"× {fmt(coefficient, 2)}", help="Prix de vente ÷ prix d'achat")
-st.info(
-    f"Pour garder {taux_marque_vise} % du prix de vente, Emma multiplie son prix d'achat par "
-    f"**{fmt(coefficient, 2)}** : {fmt(prix_achat)} € × {fmt(coefficient, 2)} = **{fmt(prix_vente)} €**. "
-    f"Dit autrement, son taux de marge est de {fmt(taux_marge)} %."
+    f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT. "
+    f"Elle veut garder <span style='color:{couleur_visee};font-weight:700'>{taux_marque_vise} %</span> du prix "
+    f"de vente pour payer ses charges ({repere}). **À quel prix la vend-elle ?**",
+    unsafe_allow_html=True,
 )
 
-st.markdown("### Le piège : confondre les deux taux")
-etiquette_bon = f"Je vise {taux_marque_vise} % de marque"
-etiquette_faux = f"J'applique {taux_marque_vise} % de marge"
-fig1 = go.Figure()
-segment(fig1, etiquette_faux, prix_achat, COULEUR_ACHAT, f"Achat {fmt(prix_achat)} €")
-segment(fig1, etiquette_faux, marge_erreur, COULEUR_ERREUR, f"Marge {fmt(marge_erreur)} €")
-segment(fig1, etiquette_bon, prix_achat, COULEUR_ACHAT, f"Achat {fmt(prix_achat)} €")
-segment(fig1, etiquette_bon, marge, COULEUR_MARGE, f"Marge {fmt(marge)} €")
-fig1.add_annotation(x=prix_vente, y=etiquette_bon, text=f"  <b>{fmt(prix_vente)} €</b>", showarrow=False,
-                    xanchor="left", font=dict(size=16, color=ENCRE))
-fig1.add_annotation(x=prix_vente_erreur, y=etiquette_faux, text=f"  <b>{fmt(prix_vente_erreur)} €</b>",
-                    showarrow=False, xanchor="left", font=dict(size=16, color=ENCRE))
-style(fig1, 260, barmode="stack",
-      xaxis=dict(range=[0, prix_vente * 1.18], title="Prix de vente HT (€)", showgrid=False),
-      yaxis=dict(showgrid=False))
-st.plotly_chart(fig1, width="stretch")
+# ---- Chiffres clés sur une seule ligne
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Prix de vente HT", euros(prix_vente, 2), help="Prix d'achat ÷ (1 − taux de marque)")
+c2.metric("Coefficient", f"× {fmt(coefficient, 2)}", help="Prix de vente ÷ prix d'achat")
+c3.metric("Taux de marge équivalent", f"{fmt(taux_marge)} %", help="Marge ÷ prix d'achat × 100")
+c4.metric("Reste à Emma par produit", euros(marge, 2), help="Prix de vente − prix d'achat")
 
-d1, d2, d3 = st.columns(3)
-d1.metric("Prix avec l'erreur", f"{fmt(prix_vente_erreur)} €")
-d2.metric("Taux de marque réellement obtenu", f"{fmt(marque_reelle)} %",
-          delta=f"{fmt(marque_reelle - taux_marque_vise)} points")
-d3.metric("Manque à gagner par produit", f"{fmt(manque)} €")
-st.warning(
-    f"Si Emma applique {taux_marque_vise} % de **marge** au lieu de {taux_marque_vise} % de **marque**, "
-    f"elle vend à {fmt(prix_vente_erreur)} € au lieu de {fmt(prix_vente)} €. Elle ne garde que "
-    f"{fmt(marque_reelle)} % du prix de vente, soit {fmt(manque)} € de moins sur chaque produit vendu."
-)
+# ---- Trois graphiques verticaux : ce qu'on déduit, étape par étape
+def deduction(titre_bas, vente, achat, couleur_reste, hauteur_max):
+    """Colonne « prix de vente − achat = reste », avec les montants écrits sur chaque barre."""
+    reste = vente - achat
+    fig = go.Figure(go.Waterfall(
+        x=["Prix de vente", "− Achat", "= Reste"],
+        measure=["absolute", "relative", "total"],
+        y=[vente, -achat, 0],
+        text=[euros(vente, 2), "− " + euros(achat, 2), "= " + euros(reste, 2)],
+        textposition="outside", connector=dict(line=dict(color="#999", dash="dot")),
+        increasing=dict(marker=dict(color="#9aa3ad")), decreasing=dict(marker=dict(color=COULEUR_ACHAT)),
+        totals=dict(marker=dict(color=couleur_reste)), hoverinfo="skip",
+    ))
+    style(fig, 330, showlegend=False,
+          yaxis=dict(range=[0, hauteur_max], showgrid=True, gridcolor="#e4e4dd", showticklabels=False),
+          xaxis=dict(showgrid=False))
+    return fig
 
-# ---- 2. Sur 100 € encaissés
-st.markdown("## 2. Ce que le taux de marque dit sur la caisse")
-achats = ca_produits * (1 - m)
-marge_commerciale = ca_produits * m
-fig2 = go.Figure()
-segment(fig2, "", achats, COULEUR_ACHAT, f"Payé au fournisseur<br>{fmt(achats, 0)} €")
-segment(fig2, "", marge_commerciale, COULEUR_MARGE, f"Reste à Emma<br>{fmt(marge_commerciale, 0)} €")
-style(fig2, 170, barmode="stack",
-      xaxis=dict(range=[0, ca_produits], title=f"Ventes de produits : {fmt(ca_produits, 0)} €", showgrid=False),
-      yaxis=dict(showticklabels=False, showgrid=False))
-st.plotly_chart(fig2, width="stretch")
-st.success(
-    f"Sur chaque 100 € encaissés, **{taux_marque_vise} € restent** à Emma après avoir payé la marchandise. "
-    f"Sur {fmt(ca_produits, 0)} € de ventes, cela fait **{fmt(marge_commerciale, 0)} €** pour payer le loyer, "
-    f"les salaires et le reste : c'est la marge commerciale (KPI 9)."
-)
 
-# ---- 3. Quel taux pour quoi faire ?
-st.markdown("## 3. Quel taux utiliser, et pour quoi ?")
-st.markdown(
-    "| | Taux de marque | Taux de marge (ou coefficient) |\n"
-    "| --- | --- | --- |\n"
-    "| **Ce qu'il dit** | Part du prix de vente qui reste à l'institut | De combien on multiplie le prix d'achat |\n"
-    "| **Je l'utilise pour** | Comparer des produits, suivre la rentabilité, viser un objectif | Fixer un prix rapidement |\n"
-    "| **Exemple d'Emma** | 60 % : sur 100 € encaissés, 60 € restent | 150 % ou × 2,5 : j'achète 24 €, je vends 60 € |\n"
-    "| **Limite** | Ne dépasse jamais 100 % | Peut dépasser 100 % |"
-)
-with st.expander("ℹ️ Rappel des formules"):
+g1, g2, g3 = st.columns(3, gap="large")
+
+with g1:
+    st.markdown(f"#### Bon : {taux_marque_vise} % de marque")
+    st.plotly_chart(deduction("", prix_vente, prix_achat, couleur_visee, prix_vente * 1.2), width="stretch")
     st.markdown(
-        "- **Taux de marque** = (prix de vente − prix d'achat) ÷ **prix de vente** × 100\n"
-        "- **Taux de marge** = (prix de vente − prix d'achat) ÷ **prix d'achat** × 100\n"
-        "- **Prix de vente** = prix d'achat ÷ (1 − taux de marque)\n"
-        "- **Coefficient** = prix de vente ÷ prix d'achat = 1 + taux de marge\n\n"
+        f"Le reste est {euros(marge, 2)} sur un prix de {euros(prix_vente, 2)} : "
+        f"{fmt(marge, 2)} ÷ {fmt(prix_vente, 2)} = "
+        f"<span style='color:{couleur_visee};font-weight:700'>{taux_marque_vise} %</span> de marque.",
+        unsafe_allow_html=True,
+    )
+
+with g2:
+    st.markdown(f"#### Piège : {taux_marque_vise} % de marge")
+    st.plotly_chart(deduction("", prix_vente_erreur, prix_achat, couleur_reelle, prix_vente * 1.2),
+                    width="stretch")
+    st.markdown(
+        f"Prix = {fmt(prix_achat)} × {fmt(1 + m, 2)} = {euros(prix_vente_erreur, 2)}. "
+        f"Le reste est {euros(marge_erreur, 2)} : {fmt(marge_erreur, 2)} ÷ {fmt(prix_vente_erreur, 2)} = "
+        f"<span style='color:{couleur_reelle};font-weight:700'>{fmt(marque_reelle)} %</span> de marque, "
+        f"pas {taux_marque_vise} %. **{euros(manque, 2)} perdus** par produit.",
+        unsafe_allow_html=True,
+    )
+
+with g3:
+    st.markdown(f"#### À la caisse : {euros(ca_produits)}")
+    achats = ca_produits * (1 - m)
+    marge_commerciale = ca_produits * m
+    st.plotly_chart(deduction("", ca_produits, achats, couleur_visee, ca_produits * 1.2), width="stretch")
+    st.markdown(
+        f"Sur chaque 100 € encaissés, **{taux_marque_vise} € restent** à Emma. Sur {euros(ca_produits)} : "
+        f"**{euros(marge_commerciale)}** pour payer loyer, salaires et le reste (marge commerciale, KPI 9)."
+    )
+
+# ---- Mémo replié
+with st.expander("Quel taux utiliser, et pour quoi ? Formules"):
+    st.markdown(
+        "| | Taux de marque | Taux de marge (ou coefficient) |\n"
+        "| --- | --- | --- |\n"
+        "| **Il dit** | Part du prix de vente qui reste à l'institut | De combien on multiplie le prix d'achat |\n"
+        "| **Je l'utilise pour** | Comparer, suivre la rentabilité, viser un objectif | Fixer un prix rapidement |\n"
+        "| **Limite** | Ne dépasse jamais 100 % | Peut dépasser 100 % |\n\n"
+        "- **Taux de marque** = (vente − achat) ÷ **vente** × 100\n"
+        "- **Taux de marge** = (vente − achat) ÷ **achat** × 100\n"
+        "- **Prix de vente** = achat ÷ (1 − taux de marque)\n\n"
         "Pour ne pas confondre : **marge → je pars de l'achat**, **marque → je pars de la vente**."
     )
