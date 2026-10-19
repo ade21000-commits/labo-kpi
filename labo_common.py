@@ -58,6 +58,17 @@ def segment(fig, y, x, couleur, texte):
                 showlegend=False)
 
 
+def degrade(valeur, bas, haut):
+    """Couleur qui passe du rouge (valeur <= bas) à l'orange puis au vert (valeur >= haut)."""
+    t = 0.0 if haut == bas else min(1.0, max(0.0, (valeur - bas) / (haut - bas)))
+    rouge, orange, vert = (192, 57, 43), (224, 160, 48), (46, 125, 79)
+    if t < 0.5:
+        a, b, u = rouge, orange, t / 0.5
+    else:
+        a, b, u = orange, vert, (t - 0.5) / 0.5
+    return "#" + "".join(f"{round(a[i] + (b[i] - a[i]) * u):02x}" for i in range(3))
+
+
 def clientes(n):
     """« 1 cliente », « 0 cliente », « 22 clientes »."""
     n = int(round(n))
