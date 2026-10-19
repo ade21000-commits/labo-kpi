@@ -12,13 +12,20 @@ BAS, HAUT = 20, 70
 with st.sidebar:
     st.header("📊 Paramètres")
     prix_achat = st.slider("Prix d'achat HT du produit (€)", 2, 80, 18)
-    taux_marque_vise = st.slider("Taux de marque visé (%)", 10, 80, 55)
+    mode = st.radio("Je règle…", ["le prix de vente", "le taux de marque visé"], horizontal=True)
+    if mode == "le prix de vente":
+        prix_vente = st.slider("Prix de vente HT (€)", float(prix_achat + 1), float(prix_achat * 5),
+                               float(min(max(40, prix_achat + 1), prix_achat * 5)), step=0.5)
+        taux_marque_vise = (prix_vente - prix_achat) / prix_vente * 100
+    else:
+        taux_marque_vise = st.slider("Taux de marque visé (%)", 10, 80, 55)
+        prix_vente = prix_achat / (1 - taux_marque_vise / 100)
     ca_produits = st.slider("Ventes de produits du mois (€)", 500, 10000, 4000, step=250)
 
 m = taux_marque_vise / 100
+tm = fmt(taux_marque_vise)  # taux affiché à la française
 
 # Bon calcul : on vise un taux de MARQUE
-prix_vente = prix_achat / (1 - m)
 marge = prix_vente - prix_achat
 taux_marge = marge / prix_achat * 100
 coefficient = prix_vente / prix_achat
@@ -39,12 +46,21 @@ elif taux_marque_vise < 55:
 else:
     repere = "confortable"
 
-st.markdown(
-    f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT. "
-    f"Elle veut garder <span style='color:{couleur_visee};font-weight:700'>{taux_marque_vise} %</span> du prix "
-    f"de vente pour payer ses charges ({repere}). **À quel prix la vend-elle ?**",
-    unsafe_allow_html=True,
-)
+if mode == "le prix de vente":
+    st.markdown(
+        f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT et la vend "
+        f"{euros(prix_vente, 2)} HT. Il lui reste "
+        f"<span style='color:{couleur_visee};font-weight:700'>{tm} %</span> du prix de vente pour payer ses "
+        f"charges ({repere}). **Est-ce assez ?**",
+        unsafe_allow_html=True,
+    )
+else:
+    st.markdown(
+        f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT. "
+        f"Elle veut garder <span style='color:{couleur_visee};font-weight:700'>{tm} %</span> du prix "
+        f"de vente pour payer ses charges ({repere}). **À quel prix la vend-elle ?**",
+        unsafe_allow_html=True,
+    )
 
 # ---- Chiffres clés sur une seule ligne
 c1, c2, c3, c4 = st.columns(4)
@@ -75,24 +91,24 @@ def deduction(titre_bas, vente, achat, couleur_reste, hauteur_max):
 g1, g2, g3 = st.columns(3, gap="large")
 
 with g1:
-    st.markdown(f"#### Bon : {taux_marque_vise} % de marque")
+    st.markdown(f"#### Bon : {tm} % de marque")
     st.plotly_chart(deduction("", prix_vente, prix_achat, couleur_visee, prix_vente * 1.2), width="stretch")
     st.markdown(
         f"Le reste est {euros(marge, 2)} sur un prix de {euros(prix_vente, 2)} : "
         f"{fmt(marge, 2)} ÷ {fmt(prix_vente, 2)} = "
-        f"<span style='color:{couleur_visee};font-weight:700'>{taux_marque_vise} %</span> de marque.",
+        f"<span style='color:{couleur_visee};font-weight:700'>{tm} %</span> de marque.",
         unsafe_allow_html=True,
     )
 
 with g2:
-    st.markdown(f"#### Piège : {taux_marque_vise} % de marge")
+    st.markdown(f"#### Piège : {tm} % de marge")
     st.plotly_chart(deduction("", prix_vente_erreur, prix_achat, couleur_reelle, prix_vente * 1.2),
                     width="stretch")
     st.markdown(
         f"Prix = {fmt(prix_achat)} × {fmt(1 + m, 2)} = {euros(prix_vente_erreur, 2)}. "
         f"Le reste est {euros(marge_erreur, 2)} : {fmt(marge_erreur, 2)} ÷ {fmt(prix_vente_erreur, 2)} = "
         f"<span style='color:{couleur_reelle};font-weight:700'>{fmt(marque_reelle)} %</span> de marque, "
-        f"pas {taux_marque_vise} %. **{euros(manque, 2)} perdus** par produit.",
+        f"pas {tm} %. **{euros(manque, 2)} perdus** par produit.",
         unsafe_allow_html=True,
     )
 
@@ -102,7 +118,7 @@ with g3:
     marge_commerciale = ca_produits * m
     st.plotly_chart(deduction("", ca_produits, achats, couleur_visee, ca_produits * 1.2), width="stretch")
     st.markdown(
-        f"Sur chaque 100 € encaissés, **{taux_marque_vise} € restent** à Emma. Sur {euros(ca_produits)} : "
+        f"Sur chaque 100 € encaissés, **{tm} € restent** à Emma. Sur {euros(ca_produits)} : "
         f"**{euros(marge_commerciale)}** pour payer loyer, salaires et le reste (marge commerciale, KPI 9)."
     )
 
