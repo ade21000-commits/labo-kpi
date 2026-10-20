@@ -11,11 +11,11 @@ BAS, HAUT = 20, 70
 
 with st.sidebar:
     st.header("📊 Paramètres")
-    prix_achat = st.slider("Prix d'achat HT du produit (€)", 2, 80, 18)
+    prix_achat = st.slider("Prix d'achat HT du produit (€)", 2, 80, 24)
     mode = st.radio("Je règle…", ["le prix de vente", "le taux de marque visé"], horizontal=True)
     if mode == "le prix de vente":
         prix_vente = st.slider("Prix de vente HT (€)", float(prix_achat + 1), float(prix_achat * 5),
-                               float(min(max(40, prix_achat + 1), prix_achat * 5)), step=0.5)
+                               float(min(max(60, prix_achat + 1), prix_achat * 5)), step=0.5)
         taux_marque_vise = (prix_vente - prix_achat) / prix_vente * 100
     else:
         taux_marque_vise = st.slider("Taux de marque visé (%)", 10, 80, 55)
@@ -48,7 +48,7 @@ else:
 
 if mode == "le prix de vente":
     st.markdown(
-        f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT et la vend "
+        f"> Emma, gérante de son institut, rachète un produit Guinot {euros(prix_achat, 0)} HT et le vend "
         f"{euros(prix_vente, 2)} HT. Il lui reste "
         f"<span style='color:{couleur_visee};font-weight:700'>{tm} %</span> du prix de vente pour payer ses "
         f"charges ({repere}). **Est-ce assez ?**",
@@ -56,7 +56,7 @@ if mode == "le prix de vente":
     )
 else:
     st.markdown(
-        f"> Emma, gérante d'un institut de 3 personnes, rachète une crème {euros(prix_achat, 0)} HT. "
+        f"> Emma, gérante de son institut, rachète un produit Guinot {euros(prix_achat, 0)} HT. "
         f"Elle veut garder <span style='color:{couleur_visee};font-weight:700'>{tm} %</span> du prix "
         f"de vente pour payer ses charges ({repere}). **À quel prix la vend-elle ?**",
         unsafe_allow_html=True,
