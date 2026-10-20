@@ -9,9 +9,9 @@ entete("Seuil de rentabilité : à partir de quand Emma gagne-t-elle de l'argent
 
 with st.sidebar:
     st.header("📊 Paramètres")
-    charges_fixes = st.slider("Charges fixes du mois (€)", 1000, 3000, 2000, step=50)
-    charges_variables = st.slider("Charges variables du mois (€)", 50, 5000, 1000, step=50)
-    ca = st.slider("CA du mois (€)", 500, 10000, 4000, step=100)
+    charges_fixes = st.slider("Charges fixes du mois (€)", 1000, 7000, 5000, step=50)
+    charges_variables = st.slider("Charges variables du mois (€)", 50, 6000, 1800, step=50)
+    ca = st.slider("CA du mois (€)", 500, 12000, 7200, step=100)
 
 pct_cv = charges_variables / ca * 100          # taux de charges variables (calculé)
 tmcv = 1 - pct_cv / 100                      # taux de marge sur coûts variables
@@ -20,9 +20,9 @@ mcv = ca * tmcv
 resultat = mcv - charges_fixes
 
 st.markdown(
-    "> **Emma gère un institut de 3 personnes. Chaque mois elle paie des charges fixes (loyer, assurance, "
-    "abonnements, comptable) et des charges variables qui montent avec son activité (consommables, "
-    "produits utilisés). À partir de quel CA gagne-t-elle de l'argent ?**"
+    "> **Emma gère seule son institut. Chaque mois elle paie des charges fixes (loyer, assurance, "
+    "abonnements, comptable, banque, cotisations, amortissement du matériel) et des charges variables qui "
+    "montent avec son activité (consommables, produits utilisés). À partir de quel CA gagne-t-elle de l'argent ?**"
 )
 st.write("Déplace les curseurs à gauche : les chiffres et les graphiques se recalculent.")
 
@@ -132,6 +132,6 @@ with st.expander("ℹ️ Rappel des formules"):
         "- **Taux de marge sur coûts variables** = 100 % − taux de charges variables\n"
         "- **Seuil de rentabilité** = charges fixes ÷ taux de marge sur coûts variables\n"
         "- **Résultat** = CA × taux de marge sur coûts variables − charges fixes\n\n"
-        "Attention : ici, on ne regarde que les charges fixes et les charges variables pour comprendre la "
-        "mécanique du seuil. Dans l'exercice du chapitre 2, le résultat tient compte d'autres charges."
+        "Les chiffres de départ sont ceux de décembre dans le livret : CA 7 200 €, charges variables 1 800 € "
+        "(25 % du CA), charges fixes 5 000 €. Seuil : 5 000 ÷ 0,75 = 6 667 €. Résultat : 400 €."
     )
