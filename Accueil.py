@@ -3,7 +3,7 @@ import streamlit as st
 from labo_common import entete, init_page
 
 init_page("Accueil")
-entete("Laboratoire KPI")
+entete("Bienvenue dans le labo : ici on comprend les KPI")
 
 st.write(
     "Ici, tu ne calcules pas : tu **comprends à quoi sert un KPI**. "
