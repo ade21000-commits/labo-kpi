@@ -98,5 +98,5 @@ with st.expander("ℹ️ Rappel des formules"):
         "- **Taux d'attrition** = 100 % − taux de fidélisation\n"
         "- **Clientes perdues** = clientes de début de période − clientes revenues\n"
         "- **CA annuel d'une cliente** = panier moyen × visites par an\n\n"
-        "Repère : un bon taux de fidélisation en institut se situe entre 65 % et 80 %."
+        "Repère : un bon taux de fidélisation en institut se situe entre 65 % et 80 %. Alerte en dessous de 60 %."
     )
