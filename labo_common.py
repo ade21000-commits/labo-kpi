@@ -9,13 +9,13 @@ ENCRE = "#2b2b2b"
 
 
 def init_page(titre_onglet):
-    st.set_page_config(page_title=f"L'appMandier - Labo - {titre_onglet}", page_icon="💄", layout="wide")
+    st.set_page_config(page_title=f"LABO KPI - {titre_onglet}", page_icon="🧪", layout="wide")
     st.markdown("<style>.stApp {background-color: #f5f5f0;}</style>", unsafe_allow_html=True)
 
 
 def entete(sous_titre):
-    st.title("💄🌺 L'appMandier - BTS 2 MECP")
-    st.caption("by la team love")
+    st.title("🧪 LABO KPI - BTS 2 MECP")
+    st.caption("Le labo de l'appMandier · by la team love")
     st.subheader(sous_titre)
 
 
